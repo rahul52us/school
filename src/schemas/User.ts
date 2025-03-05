@@ -2,15 +2,16 @@ import mongoose, { Schema, Document } from "mongoose";
 
 export interface UserInterface extends Document {
   name: string;
-  username: string;
+  email?: string;
+  phone: string;
+  gender: string;
   pic: string;
   bio?: string;
-  position?: string[];
   company: Schema.Types.ObjectId;
-  profile_details: Schema.Types.ObjectId;
-  is_active: boolean;
-  role: string;
-  password: string;
+  permissions:Schema.Types.Mixed,
+  isActive: boolean;
+  type: string;
+  password?: string;
   deletedAt?:Date,
   createdAt?:Date,
   updatedAt?:Date
@@ -19,16 +20,17 @@ export interface UserInterface extends Document {
 const UserSchema: Schema<UserInterface> = new Schema<UserInterface>(
   {
     name: { type: String, trim: true },
-    username: { type: String, required: true, index: true, trim: true },
+    email: { type: String },
+    phone: { type: String, required: true},
     pic: { type: String, trim: true },
-    position: {type: Array},
+    gender : { type: String, default: "male" },
     company: { type: Schema.Types.ObjectId, ref: "Company" },
     bio: { type: String, trim: true },
-    profile_details: { type: Schema.Types.ObjectId, ref: "ProfileDetails" },
-    is_active: { type: Boolean, default: false },
-    role: {
+    isActive: { type: Boolean, default: false },
+    permissions : {type : Schema.Types.Mixed},
+    type: {
       type: String,
-      enum: ["user", "admin", "superadmin", "manager", "customer", "support"],
+      enum: ["user", "admin", "superAdmin"],
       default: "user",
     },
     password: { type: String, trim: true },
