@@ -1,7 +1,8 @@
 import express from "express";
+import mongoose from "mongoose"; // Ensure mongoose is imported
 import Class from "../schemas/class/class.schema";  // Importing the Class Schema
-import School from "../schemas/school/school.schema"; // Import School Model (if needed to verify the school)
-import Student from "../schemas/students/students.schema";  // Import Student Model (for managing students)
+import School from "../schemas/school/school.schema"; // Import School Model
+import Student from "../schemas/students/students.schema";  // Import Student Model
 
 const router = express.Router();
 
@@ -11,8 +12,13 @@ const router = express.Router();
  */
 router.post("/", async (req, res) => {
     try {
-        // Create a new class
+        // Extract data from request
         const { name, section, school, students, subjects } = req.body;
+
+        // Check if the school ID is valid
+        if (!mongoose.Types.ObjectId.isValid(school)) {
+            return res.status(400).json({ error: "Invalid school ID" });
+        }
 
         // Check if the school exists
         const schoolExists = await School.findById(school);
@@ -26,9 +32,16 @@ router.post("/", async (req, res) => {
             return res.status(400).json({ error: "Some students not found" });
         }
 
-        // Create the class
-        const newClass = new Class({ name, section, school, students, subjects });
+        // Create a new class
+        const newClass = new Class({ 
+            name, 
+            section, 
+            school: new mongoose.Types.ObjectId(school), // Use new ObjectId
+            students, 
+            subjects 
+        });
         await newClass.save();
+
         res.status(201).json({ message: "Class created successfully", newClass });
     } catch (error: unknown) {
         if (error instanceof Error) {
@@ -84,6 +97,11 @@ router.put("/:id", async (req, res) => {
     try {
         const { name, section, school, students, subjects } = req.body;
 
+        // Check if the school ID is valid
+        if (!mongoose.Types.ObjectId.isValid(school)) {
+            return res.status(400).json({ error: "Invalid school ID" });
+        }
+
         // Check if the school exists
         const schoolExists = await School.findById(school);
         if (!schoolExists) {
@@ -99,7 +117,7 @@ router.put("/:id", async (req, res) => {
         // Find the class and update
         const updatedClass = await Class.findByIdAndUpdate(
             req.params.id,
-            { name, section, school, students, subjects },
+            { name, section, school: new mongoose.Types.ObjectId(school), students, subjects },
             { new: true }
         );
 

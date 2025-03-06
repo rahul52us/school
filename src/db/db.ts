@@ -8,10 +8,8 @@ const connectToDatabase = async (): Promise<void> => {
         const uri: string | undefined = process.env.MONGODB_URI;
         if (!uri) throw new Error("MONGODB_URI is missing in .env file!");
 
-        await mongoose.connect(uri, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
-        } as mongoose.ConnectOptions);
+        // Connect to MongoDB using async/await without .then/.catch
+        await mongoose.connect(uri);
 
         console.log("✅ Database Connected Successfully!");
     } catch (error: any) {
