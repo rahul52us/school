@@ -1,38 +1,30 @@
-import "./db/db";
-import dotenv from "dotenv";
 import express from "express";
-import bodyParser from "body-parser";
 import cors from "cors";
-import importRoutings from "./routes/index";
+import dotenv from "dotenv";
 import http from "http";
+import connectToDatabase from "./db/db";
+import importRoutings from "./routes/index";
 import errorMiddleware from "./config/errorHandler";
 
-const app = express();
 dotenv.config();
 
-//create the server
+const app = express();
 const server = http.createServer(app);
+const PORT = process.env.PORT || 5000;
 
-//registering body-parder middleware
-app.use(bodyParser.json({ limit: "50mb" }));
-app.use(bodyParser.urlencoded({ extended: true }));
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cors());
 
-//Enable CORS for all routes and all origin
-app.use(cors({
-    origin: "*",
-    methods: ["GET", "POST", "DELETE", "PUT", "PATCH"]
-}));
-
-//import routing function
+// Import routes
 importRoutings(app);
-
-app.get('/',(req,res) => {
-    res.status(200).send("Welcome to our app")
-});
-
-//registering custom middleware
 app.use(errorMiddleware);
 
-server.listen(process.env.PORT, () => {
-    console.log(`The server is running on port ${process.env.PORT}`);
+// Connect to Database
+connectToDatabase();
+
+// Start Server
+server.listen(PORT, () => {
+    console.log(`🚀 Server is running on port ${PORT}`);
 });

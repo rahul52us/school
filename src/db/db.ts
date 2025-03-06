@@ -3,24 +3,21 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const connectToDatabase = async (): Promise<mongoose.Connection> => {
+const connectToDatabase = async (): Promise<void> => {
     try {
-        const uri: string = process.env.MONGODB_URI!;
-        
-        const options: any = {
-            useUnifiedTopology: true
-        };
+        const uri: string | undefined = process.env.MONGODB_URI;
+        if (!uri) throw new Error("MONGODB_URI is missing in .env file!");
 
-        await mongoose.connect(uri, options);
+        await mongoose.connect(uri, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+        } as mongoose.ConnectOptions);
 
-        console.log("Connected to MongoDB Atlas");
-
-        return mongoose.connection;
-    }catch(error: any) {
-        console.error('Error connecting to MongoDB Atlas:', error?.message);
-        throw error;
+        console.log("✅ Database Connected Successfully!");
+    } catch (error: any) {
+        console.error("❌ Error connecting to Database:", error.message);
+        process.exit(1);
     }
-}
+};
 
-connectToDatabase();
-
+export default connectToDatabase;
