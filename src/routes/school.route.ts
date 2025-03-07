@@ -1,81 +1,50 @@
-import express from "express";
-import School from "../schemas/school/school.schema"; // ✅ Updated Path
+// // routes/school/school.routes.ts
+// import express, { Request, Response } from 'express';
+// import schoolService from '../services/school.service';
 
-const router = express.Router();
+// const router = express.Router();
 
-/**
- * 🎓 Create a new school
- * @route POST /api/schools
- */
-router.post("/", async (req, res) => {
-    try {
-        const school = new School(req.body);
-        await school.save();
-        res.status(201).json({ message: "School created successfully", school });
-    } catch (error) {
-        res.status(400).json({ error: "Error creating school", details: error });
-    }
-});
+// // Get all schools
+// router.get('/', asyncHandler(async (req: Request, res: Response) => {
+//     const { page, limit, sort, ...filters } = req.query;
 
-/**
- * 📌 Get all schools
- * @route GET /api/schools
- */
-router.get("/", async (req, res) => {
-    try {
-        const schools = await School.find();
-        res.status(200).json(schools);
-    } catch (error) {
-        res.status(500).json({ error: "Error fetching schools", details: error });
-    }
-});
+//     const options = {
+//         page,
+//         limit,
+//         sort: sort as string
+//     };
 
-/**
- * 🏫 Get a school by ID
- * @route GET /api/schools/:id
- */
-router.get("/:id", async (req, res) => {
-    try {
-        const school = await School.findById(req.params.id);
-        if (!school) {
-            return res.status(404).json({ error: "School not found" });
-        }
-        res.status(200).json(school);
-    } catch (error) {
-        res.status(500).json({ error: "Error fetching school", details: error });
-    }
-});
+//     const result = await schoolService.getAllSchools(filters as any, options);
 
-/**
- * ✏️ Update school details
- * @route PUT /api/schools/:id
- */
-router.put("/:id", async (req, res) => {
-    try {
-        const school = await School.findByIdAndUpdate(req.params.id, req.body, { new: true });
-        if (!school) {
-            return res.status(404).json({ error: "School not found" });
-        }
-        res.status(200).json({ message: "School updated successfully", school });
-    } catch (error) {
-        res.status(500).json({ error: "Error updating school", details: error });
-    }
-});
+//     res.status(200).json(result);
+// }));
 
-/**
- * 🗑️ Delete a school
- * @route DELETE /api/schools/:id
- */
-router.delete("/:id", async (req, res) => {
-    try {
-        const school = await School.findByIdAndDelete(req.params.id);
-        if (!school) {
-            return res.status(404).json({ error: "School not found" });
-        }
-        res.status(200).json({ message: "School deleted successfully" });
-    } catch (error) {
-        res.status(500).json({ error: "Error deleting school", details: error });
-    }
-});
+// // Get school by id
+// router.get('/:id', asyncHandler(async (req: Request, res: Response) => {
+//     const school = await schoolService.getSchoolById(req.params.id);
+//     res.status(200).json(school);
+// }));
 
-export default router;
+// // Create new school
+// router.post('/', asyncHandler(async (req: Request, res: Response) => {
+//     const school = await schoolService.createSchool(req.body);
+//     res.status(201).json(school);
+// }));
+
+// // Update school
+// router.put('/:id', asyncHandler(async (req: Request, res: Response) => {
+//     const school = await schoolService.updateSchool(req.params.id, req.body);
+//     res.status(200).json(school);
+// }));
+
+// // Delete school
+// router.delete('/:id', asyncHandler(async (req: Request, res: Response) => {
+//     await schoolService.deleteSchool(req.params.id);
+//     res.status(200).json({ message: 'School deleted successfully' });
+// }));
+
+// export default router;
+
+// function asyncHandler(arg0: (req: Request, res: Response) => Promise<void>): import("@types/express-serve-static-core").RequestHandler<{}, any, any, import("@types/qs").ParsedQs, Record<string, any>> {
+//     throw new Error('Function not implemented.');
+// }
