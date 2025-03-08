@@ -40,6 +40,6 @@ const tokenVerificationSchema: Schema<tokenVerificationInterface> = new Schema<t
     }
 })
 
-const tokenModel = mongoose.model<tokenVerificationInterface>("token", tokenVerificationSchema);
+const Token = mongoose.model<tokenVerificationInterface>("token", tokenVerificationSchema);
 
-export default tokenModel;
+export default Token

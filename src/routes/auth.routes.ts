@@ -5,7 +5,7 @@ import {
   loginUser,
   verifyLoginUser,
   verifySignUpUser,
-} from "../services/User/User";
+} from "../services/user.service";
 import authenticate from "../config/middleware/authenticate";
 
 const router = express.Router();
