@@ -2,15 +2,17 @@ import mongoose, { Document, Schema } from 'mongoose';
 
 export interface ISchool extends Document {
   name: string;
-  address: {
+  domain : string;
+  address: [{
     street: string;
     city: string;
     state: string;
     zipCode: string;
     country: string;
-  };
-  contactEmail: string;
-  contactPhone: string;
+  }];
+  email: string;
+  phone: string;
+  createdBy: mongoose.Schema.Types.ObjectId,
   principalName: string;
   website?: string;
   foundedYear?: number;
@@ -31,22 +33,20 @@ const SchoolSchema: Schema = new Schema({
     },
     required: true
   },
-  contactEmail: { type: String, required: true, trim: true },
-  contactPhone: { type: String, required: true, trim: true },
+  email: { type: String, required: true, trim: true },
+  phone: { type: String, required: true, trim: true },
   principalName: { type: String, required: true, trim: true },
   website: { type: String, trim: true },
   foundedYear: { type: Number },
+  createdBy : {
+    type : mongoose.Schema.Types.ObjectId,
+    ref : 'User'
+  },
   isActive: { type: Boolean, default: true },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
 
-// `updatedAt` update karne ke liye middleware
-SchoolSchema.pre('save', function (next) {
-  this.updatedAt = new Date();
-  next();
-});
 
-// Model export fix
-const SchoolModel = mongoose.models.School || mongoose.model<ISchool>('School', SchoolSchema);
+const SchoolModel = mongoose.model<ISchool>('School', SchoolSchema);
 export default SchoolModel;

@@ -9,6 +9,8 @@ const API_KEY = process.env.OTP_API_KEY || "your-default-api-key";
 export const generateOTP = (): string => (DEMO_MODE ? "123456" : Math.floor(100000 + Math.random() * 900000).toString());
 
 // Send OTP
+
+
 export const sendOtp = async (recipientNumber: string, otp: string) => {
     try {
         if (DEMO_MODE) {

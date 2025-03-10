@@ -64,6 +64,63 @@ const count = async (filters: SchoolFilters = {}): Promise<number> => {
   return await School.countDocuments(filters);
 };
 
+
+export const findSchool = async (data : any) => {
+  try
+  {
+    const schoolName = await School.findOne(data)
+    if(schoolName){
+      return {
+        status : 'info',
+        statusCode : 300,
+        message : 'School Name is already registered',
+        data : schoolName
+    }
+    }
+    else {
+      return {
+        status : 'success',
+        statusCode : 200,
+        message : 'School Name does not exists',
+        data : 'School Name does not exists'
+    }
+    }
+  }
+  catch(err : any)
+  {
+    return {
+      status : 'error',
+      statusCode : 500,
+      message : err?.message,
+      data : err?.message
+  }
+  }
+}
+
+export const createSchool = async(data : any) => {
+    try
+    {
+        const schoolDetails = new School(data)
+        const savedSchool = await schoolDetails.save()
+        return {
+            status : 'success',
+            statusCode : 201,
+            message : 'School has been created successfully',
+            data : savedSchool
+        }
+    }
+    catch(err : any)
+    {
+        return {
+            status : 'error',
+            statusCode : 500,
+            message : err?.message,
+            data : err?.message
+        }
+    }
+}
+
+
 export default {
   findAll,
   findById,
@@ -73,3 +130,8 @@ export default {
   delete: deleteSchool,
   count
 };
+
+
+
+// CREATE THE SCHOOL
+

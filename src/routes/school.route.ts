@@ -1,8 +1,9 @@
 import express from "express";
-import { registerSchool } from "../controllers/school.controller";
+import { createSchoolService } from "../services/school.service";
+import authenticate from "../config/middleware/authenticate";
 
 const router = express.Router();
 
-router.post("/register", registerSchool);
+router.post("/create", authenticate, createSchoolService);
 
 export default router;

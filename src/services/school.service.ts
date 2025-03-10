@@ -1,13 +1,35 @@
-import School from "../models/school.model";
+import { createSchool, findSchool } from "../repository/school.repository";
+import { NextFunction, Response } from "express";
 
-export const registerSchoolService = async (name: string, contactEmail: string, contactPhone: string, address: object) => {
-    // Check if school already exists
-    const existingSchool = await School.findOne({ contactEmail });
-    if (existingSchool) {
-        throw new Error("School already registered");
+export const createSchoolService = async (
+  req: any,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const user = req.userId;
+
+    const { status, statusCode, data, message } = await findSchool({
+      name: req.body.name,
+    });
+    if (status === "success") {
+      const { status, statusCode, message, data } = await createSchool({
+        ...req.body,
+        createdBy: user,
+      });
+      return res.status(statusCode).send({
+        message,
+        data,
+        status,
+      });
+    } else {
+      return res.status(statusCode).send({
+        message,
+        data,
+        status,
+      });
     }
-
-    // Create new school entry
-    const newSchool = new School({ name, contactEmail, contactPhone, address });
-    return await newSchool.save();
+  } catch (err: any) {
+    next(err);
+  }
 };
