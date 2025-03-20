@@ -1,81 +1,152 @@
-import mongoose, { PopulateOptions } from 'mongoose';
-import Class, { IClass } from '../schemas/class/class.schema';
+import Class from "../schemas/class/class.schema"; // Assuming Class schema exists
 
-interface ClassFilters {
-    name?: string;
-    grade?: string;
-    section?: string;
-    academicYear?: string;
-    school?: string;
-    isActive?: boolean;
-    [key: string]: any;
-}
-
-interface QueryOptions {
-    populate?: string | PopulateOptions | (string | PopulateOptions)[];
-    sort?: string | Record<string, 1 | -1>;
-    page?: string | number;
-    limit?: string | number;
-    select?: string;
-}
-
-const findAll = async (filters: ClassFilters = {}, options: any): Promise<IClass[]> => {
-    const query = Class.find(filters);
-
-    if (options.populate) query.populate(options.populate);
-    if (options.sort) query.sort(options.sort);
-    if (options.select) query.select(options.select);
-
-    if (options.page && options.limit) {
-        const page = Math.max(parseInt(options.page.toString(), 10), 1);
-        const limit = Math.max(parseInt(options.limit.toString(), 10), 1);
-        query.skip((page - 1) * limit).limit(limit);
+export const findClass = async (data: any) => {
+    try {
+        const classData = await Class.findOne(data);
+        if (classData) {
+            return {
+                status: "info",
+                statusCode: 300,
+                message: "Class is already registered",
+                data: classData,
+            };
+        } else {
+            return {
+                status: "success",
+                statusCode: 200,
+                message: "Class does not exist",
+                data: null,
+            };
+        }
+    } catch (err: any) {
+        return {
+            status: "error",
+            statusCode: 500,
+            message: err?.message,
+            data: err?.message,
+        };
     }
-
-    return query.exec();
 };
 
-const findById = async (id: string, populate?: any | PopulateOptions | (string | PopulateOptions)[]): Promise<IClass | null> => {
-    if (!mongoose.Types.ObjectId.isValid(id)) return null;
-    const query = Class.findById(id);
-    if (populate) query.populate(populate);
-    return query.exec();
+export const createClass = async (data: any) => {
+    try {
+        const classDetails = new Class(data);
+        const savedClass = await classDetails.save();
+        return {
+            status: "success",
+            statusCode: 201,
+            message: "Class has been created successfully",
+            data: savedClass,
+        };
+    } catch (err: any) {
+        return {
+            status: "error",
+            statusCode: 500,
+            message: err?.message,
+            data: err?.message,
+        };
+    }
 };
 
-const findBySchool = async (schoolId: string, options: any): Promise<IClass[]> => {
-    if (!mongoose.Types.ObjectId.isValid(schoolId)) return [];
-    const query = Class.find({ school: schoolId });
-
-    if (options.sort) query.sort(options.sort);
-    if (options.populate) query.populate(options.populate);
-
-    return query.exec();
+export const findAllClasses = async (filters: any = {}) => {
+    try {
+        const classes = await Class.find(filters);
+        return {
+            status: "success",
+            statusCode: 200,
+            message: "Classes fetched successfully",
+            data: classes,
+        };
+    } catch (err: any) {
+        return {
+            status: "error",
+            statusCode: 500,
+            message: err?.message,
+            data: err?.message,
+        };
+    }
 };
 
-const create = async (classData: Partial<IClass>): Promise<IClass> => {
-    return Class.create(classData);
+export const findClassById = async (id: string) => {
+    try {
+        const classData = await Class.findById(id);
+        if (classData) {
+            return {
+                status: "success",
+                statusCode: 200,
+                message: "Class found",
+                data: classData,
+            };
+        } else {
+            return {
+                status: "info",
+                statusCode: 404,
+                message: "Class not found",
+                data: null,
+            };
+        }
+    } catch (err: any) {
+        return {
+            status: "error",
+            statusCode: 500,
+            message: err?.message,
+            data: err?.message,
+        };
+    }
 };
 
-const update = async (id: string, classData: Partial<IClass>): Promise<IClass | null> => {
-    if (!mongoose.Types.ObjectId.isValid(id)) return null;
-    return Class.findByIdAndUpdate(id, classData, { new: true, runValidators: true }).exec();
+export const updateClass = async (id: string, data: any) => {
+    try {
+        const updatedClass = await Class.findByIdAndUpdate(id, data, { new: true });
+        if (updatedClass) {
+            return {
+                status: "success",
+                statusCode: 200,
+                message: "Class updated successfully",
+                data: updatedClass,
+            };
+        } else {
+            return {
+                status: "info",
+                statusCode: 404,
+                message: "Class not found",
+                data: null,
+            };
+        }
+    } catch (err: any) {
+        return {
+            status: "error",
+            statusCode: 500,
+            message: err?.message,
+            data: err?.message,
+        };
+    }
 };
 
-const deleteClass = async (id: string): Promise<IClass | null> => {
-    if (!mongoose.Types.ObjectId.isValid(id)) return null;
-    return Class.findByIdAndDelete(id).exec();
-};
-
-const count = async (filters: ClassFilters = {}): Promise<number> => {
-    return Class.countDocuments(filters).exec();
-};
-
-export default {
-    findAll,
-    findById,
-    findBySchool,
-    create,
-    update,
-    delete: deleteClass,
-    count
+export const deleteClass = async (id: string) => {
+    try {
+        const deletedClass = await Class.findByIdAndDelete(id);
+        if (deletedClass) {
+            return {
+                status: "success",
+                statusCode: 200,
+                message: "Class deleted successfully",
+                data: deletedClass,
+            };
+        } else {
+            return {
+                status: "info",
+                statusCode: 404,
+                message: "Class not found",
+                data: null,
+            };
+        }
+    } catch (err: any) {
+        return {
+            status: "error",
+            statusCode: 500,
+            message: err?.message,
+            data: err?.message,
+        };
+    }
 };
