@@ -3,6 +3,10 @@ import mongoose, { Schema, Document } from "mongoose";
 export interface UserCompanyInterface extends Document {
     type: "customer" | "vendor";
     company_ids?: Schema.Types.ObjectId[];
+    parent : {
+        type : mongoose.Schema.Types.ObjectId
+    }
+    isActive?:Boolean;
     company_details?: {
         name: string;
         phone: string;
@@ -28,6 +32,9 @@ const UserCompanySchema: Schema<UserCompanyInterface> = new Schema<UserCompanyIn
                 ref: "Company"
             }
         ],
+        parent : {
+            type : mongoose.Schema.Types.ObjectId
+        },
         company_details: {
             name: { type: String, trim: true },
             address: { type: String, trim: true },
@@ -35,6 +42,10 @@ const UserCompanySchema: Schema<UserCompanyInterface> = new Schema<UserCompanyIn
             email: { type: String, trim: true },
             gstin: { type: String, trim: true },
             pan: { type: String, trim: true }
+        },
+        isActive:{
+            type : Boolean,
+            default : true
         },
         deletedAt: {
             type: Date
