@@ -7,10 +7,12 @@ import {
     deleteSchoolService
 } from "../services/school.service";
 import authenticate from "../config/middleware/authenticate";
+import authorizeRoles from "../config/middleware/authorize";
 
 const router = express.Router();
 
-router.post("/create", authenticate, createSchoolService);
+
+router.post("/create", authenticate, authorizeRoles("superAdmin"), createSchoolService);
 router.get("/all", authenticate, getAllSchoolsService);
 router.get("/:id", authenticate, getSchoolByIdService);
 router.put("/:id", authenticate, updateSchoolService);

@@ -9,27 +9,16 @@ dotenv.config();
 const authenticate = async (req: any, res: Response, next: NextFunction) => {
   try {
     const token = req.headers.authorization?.split(" ")[1];
-    if (!token) {
-      throw generateError("Unauthorized User: No token provided", 401);
-    }
+    if (!token) throw generateError("Unauthorized User: No token provided", 401);
 
     const secretKey = process.env.SECRET_KEY ?? "@#$4515KapilKharera_675@#";
-
     const decoded = jwt.verify(token, secretKey) as { userId: string };
 
     const user = await User.findById(decoded.userId).select("-password");
+    if (!user) throw generateError("Unauthorized User: User not found", 401);
+    if (!user.isActive) throw generateError("Unauthorized User: Account is inactive", 403);
 
-    if (!user) {
-      throw generateError("Unauthorized User: User not found", 401);
-    }
-
-    if (!user.isActive) {
-      throw generateError("Unauthorized User: Account is inactive", 403);
-    }
-
-    req.userId = decoded.userId;
-    req.bodyData = user.toObject();
-
+    req.user = user; // attach user info to request
     next();
   } catch (err: any) {
     const error = generateError(`Authentication Error: ${err.message}`, err.status || 401);

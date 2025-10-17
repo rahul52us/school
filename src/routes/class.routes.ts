@@ -7,10 +7,11 @@ import {
     deleteClassService 
 } from "../services/class.service";
 import authenticate from "../config/middleware/authenticate";
+import authorizeRoles from "../config/middleware/authorize";
 
 const router = express.Router();
 
-router.post("/create", authenticate, createClassService);
+router.post("/create", authenticate, authorizeRoles("superAdmin", "admin"), createClassService);
 router.get("/all", authenticate, getAllClassesService);
 router.get("/:id", authenticate, getClassByIdService);
 router.put("/:id", authenticate, updateClassService);
