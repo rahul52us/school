@@ -2,27 +2,29 @@ import mongoose, { Document, Schema } from 'mongoose';
 
 export interface ISchool extends Document {
   name: string;
-  domain : string;
-  address: [{
+  domain: string;
+  address: {
     street: string;
     city: string;
     state: string;
     zipCode: string;
     country: string;
-  }];
+  };
   email: string;
   phone: string;
-  createdBy: mongoose.Schema.Types.ObjectId,
   principalName: string;
   website?: string;
   foundedYear?: number;
   isActive: boolean;
+  createdBy: mongoose.Schema.Types.ObjectId; // superadmin or admin
+  parentSchool?: mongoose.Schema.Types.ObjectId | null; // for branch logic
   createdAt: Date;
   updatedAt: Date;
 }
 
 const SchoolSchema: Schema = new Schema({
   name: { type: String, required: true, trim: true },
+  domain: { type: String, required: true, trim: true },
   address: {
     type: {
       street: { type: String, required: true },
@@ -38,15 +40,30 @@ const SchoolSchema: Schema = new Schema({
   principalName: { type: String, required: true, trim: true },
   website: { type: String, trim: true },
   foundedYear: { type: Number },
-  createdBy : {
-    type : mongoose.Schema.Types.ObjectId,
-    ref : 'User'
+
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
   },
+
+  // 🏫 Parent-Child relationship for branches
+  parentSchool: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'School',
+    default: null
+  },
+
   isActive: { type: Boolean, default: true },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
 
+// Update timestamps automatically
+SchoolSchema.pre('save', function (next) {
+  this.updatedAt = new Date();
+  next();
+});
 
 const SchoolModel = mongoose.model<ISchool>('School', SchoolSchema);
 export default SchoolModel;
