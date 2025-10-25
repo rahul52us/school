@@ -1,82 +1,10 @@
-
 import { Request, Response, NextFunction } from "express";
 import { getUserDetailsById } from "../repository/user.repository";
 import User from "../schemas/User";
-import { generateOTP, sendOtp } from "../config/helper/generateOTP";
 import generateToken from "../config/helper/generateToken";
 import { generateError } from "../config/Error/functions";
 import Company from "../schemas/Company";
-import Token from "../schemas/token";
-import { Types } from "mongoose";
-
-// const createAdminUser = async (
-//   req: Request,
-//   res: Response,
-//   next: NextFunction
-// ): Promise<any> => {
-//   try {
-//     const { phone } = req.body;
-
-//     if (!phone || !/^\d{10}$/.test(phone)) {
-//       throw generateError("Please provide a valid 10-digit mobile number", 400);
-//     }
-
-//     const existUser = await User.findOne({ phone: phone });
-
-//     if (existUser) {
-//       throw generateError("User with this mobile number already exists", 400);
-//     }
-
-//     const user = new User({
-//       ...req.body,
-//     });
-
-//     const savedUser = await user.save();
-
-//     if (!savedUser) {
-//       throw generateError("Failed to create user", 500);
-//     }
-
-//     // Will generate the otp here
-//     const otp: any = generateOTP();
-
-//     let generatedToken = generateToken({ userId: savedUser._id });
-//     const tokenDoc = new Token({
-//       userId: savedUser._id,
-//       token: generatedToken,
-//       otp: otp,
-//       isActive: true,
-//       type : 'sign_up'
-//     });
-
-//     const savedToken = await tokenDoc.save();
-
-//     const {status, data} = await sendOtp(otp, phone)
-//     if(status === "success" && data){
-//       return res.status(201).send({
-//         message:
-//           "Account created successfully. Please verify your account using the OTP sent to your mobile number.",
-//         data: {
-//           mobile_no: savedUser.phone,
-//           token: generatedToken
-//         },
-//         statusCode: 201,
-//         success: true,
-//       });
-//     }
-//     else{
-//       await user.deleteOne()
-//       await savedToken.deleteOne()
-//       return res.status(400).send({
-//         message : 'Failed to send the otp on the given mobile No',
-//         data : 'Failed to send the otp on the given mobile No'
-//       })
-//     }
-//   } catch (error) {
-//     next(error);
-//   }
-// };
-// user.service.ts (update createAdminUser only, rest unchanged)
+import bcrypt from "bcrypt"; // Make sure to install: npm install bcrypt @types/bcrypt
 
 const createAdminUser = async (
   req: Request,
@@ -84,109 +12,62 @@ const createAdminUser = async (
   next: NextFunction
 ): Promise<any> => {
   try {
-    const { phone } = req.body;
+    const { email, password } = req.body;
 
-    if (!phone || !/^\d{10}$/.test(phone)) {
-      throw generateError("Please provide a valid 10-digit mobile number", 400);
+    if (!email || !password) {
+      throw generateError("Please provide email and password", 400);
     }
 
-    const existUser = await User.findOne({ phone: phone });
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      throw generateError("Please provide a valid email address", 400);
+    }
+
+    const existUser = await User.findOne({ email: email });
 
     if (existUser) {
-      throw generateError("User with this mobile number already exists", 400);
+      throw generateError("User with this email already exists", 400);
     }
 
     // Determine role: if no superAdmin exists, make this user the superAdmin
     const existingSuperAdmin = await User.findOne({ type: "superAdmin" });
     const newUserType = existingSuperAdmin ? (req.body.type || "admin") : "superAdmin";
 
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     const user = new User({
       ...req.body,
-      type: newUserType,        // ensure type set
-      isActive: newUserType === "superAdmin" ? true : false // optionally auto-activate superAdmin
+      password: hashedPassword,
+      type: newUserType,
+      isActive: true // Auto-activate since no OTP verification needed
     });
 
-    const savedUser = await user.save();
+    const savedUser: any = await user.save();
 
     if (!savedUser) {
       throw generateError("Failed to create user", 500);
     }
 
-    // Will generate the otp here
-    const otp: any = generateOTP();
+    // Create company with user's name
+    const savedCompany: any = await new Company({ 
+      type: "vendor",
+      name: savedUser.name || `${savedUser.email}'s Company`
+    }).save();
 
-    let generatedToken = generateToken({ userId: (savedUser._id as Types.ObjectId).toString() });
-    const tokenDoc = new Token({
-      userId: savedUser._id,
-      token: generatedToken,
-      otp: otp,
-      isActive: true,
-      type: 'sign_up'
-    });
+    savedUser.company = savedCompany._id;
+    await savedUser.save();
 
-    const savedToken = await tokenDoc.save();
+    let generatedToken = generateToken({ userId: savedUser._id.toString() });
 
-    const { status, data } = await sendOtp(otp, phone)
-    if (status === "success" && data) {
-      return res.status(201).send({
-        message:
-          "Account created successfully. Please verify your account using the OTP sent to your mobile number.",
-        data: {
-          mobile_no: savedUser.phone,
-          token: generatedToken
-        },
-        statusCode: 201,
-        success: true,
-      });
-    }
-    else {
-      await user.deleteOne()
-      await savedToken.deleteOne()
-      return res.status(400).send({
-        message: 'Failed to send the otp on the given mobile No',
-        data: 'Failed to send the otp on the given mobile No'
-      })
-    }
-  } catch (error) {
-    next(error);
-  }
-};
-
-const verifySignUpUser = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<any> => {
-  try {
-    const { token, otp } = req.body;
-
-    if (!token || !otp) {
-      throw generateError("Please provide mobile number and OTP", 400);
-    }
-
-    // Verify OTP
-    const checkToken = await Token.findOne({ token, isActive: true });
-    if (!checkToken || checkToken.otp !== otp) {
-      throw generateError("Invalid OTP", 400);
-    }
-
-    const updatedUser: any = await User.findById(checkToken.userId);
-    if (!updatedUser) {
-      throw generateError("User not found", 404);
-    }
-
-    const savedCompany = await new Company({ type: "vendor" }).save();
-    updatedUser.company = savedCompany._id;
-    updatedUser.isActive = true;
-    await updatedUser.save();
-
-    const authToken = generateToken({ userId: updatedUser._id.toString() });
-    checkToken.isActive = false
-    await checkToken.save()
-    return res.status(200).json({
-      message: "Account verified successfully",
-      data: { token: authToken },
-      statusCode: 200,
+    return res.status(201).send({
+      message: "Account created successfully.",
+      data: {
+        email: savedUser.email,
+        token: generatedToken
+      },
+      statusCode: 201,
       success: true,
     });
   } catch (error) {
@@ -200,88 +81,42 @@ const loginUser = async (
   next: NextFunction
 ): Promise<any> => {
   try {
-    const { phone } = req.body;
+    const { email, password } = req.body;
 
-    if (!phone || !/^\d{10}$/.test(phone)) {
-      throw generateError("Please provide a valid 10-digit mobile number", 400);
+    if (!email || !password) {
+      throw generateError("Please provide email and password", 400);
     }
 
-    const user: any = await User.findOne({ phone });
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      throw generateError("Please provide a valid email address", 400);
+    }
+
+    const user: any = await User.findOne({ email });
 
     if (!user) {
-      throw generateError("This phone is not registered. Please sign up first.", 404);
+      throw generateError("This email is not registered. Please sign up first.", 404);
     }
 
-    // Will generate the otp here
-    const otp: any = generateOTP();
-
-    let generatedToken = generateToken({ userId: user._id });
-
-    const tokenDoc = new Token({
-      userId: user._id,
-      token: generatedToken,
-      otp: otp,
-      isActive: true,
-      type: 'login'
-    });
-
-    await tokenDoc.save();
-
-    //  will send the otp here
-    const { status, data } = await sendOtp(otp, phone)
-    if (status === "success" && data) {
-      return res.status(201).send({
-        message:
-          "otp has been shared to your registered number",
-        data: {
-          token: generatedToken
-        },
-        statusCode: 201,
-        success: true,
-      })
-    }
-    else {
-      return res.status(400).send({
-        message: 'Failed to send the otp on the given mobile No',
-        data: 'Failed to send the otp on the given mobile No'
-      })
-    }
-  } catch (error) {
-    next(error);
-  }
-};
-
-const verifyLoginUser = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<any> => {
-  try {
-    const { token, otp } = req.body;
-
-    if (!token || !otp) {
-      throw generateError("Please provide mobile number and OTP", 400);
+    // Check if user is active
+    if (!user.isActive) {
+      throw generateError("Your account is not active. Please contact support.", 403);
     }
 
-    // Verify OTP
-    const checkToken = await Token.findOne({ token, isActive: true });
-    if (!checkToken || checkToken.otp !== otp) {
-      throw generateError("Invalid OTP", 400);
+    // Verify password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      throw generateError("Invalid email or password", 401);
     }
 
-    const updatedUser: any = await User.findById(checkToken.userId);
+    let generatedToken = generateToken({ userId: user._id.toString() });
 
-    if (!updatedUser) {
-      throw generateError("User not found", 404);
-    }
-
-    const authToken = generateToken({ userId: updatedUser._id.toString() });
-    checkToken.isActive = false;
-    await checkToken.save();
-
-    return res.status(200).json({
-      message: "Account verified successfully",
-      data: { token: authToken },
+    return res.status(200).send({
+      message: "Login successful",
+      data: {
+        token: generatedToken
+      },
       statusCode: 200,
       success: true,
     });
@@ -303,4 +138,4 @@ const getUserDetailsByIdService = async (req: any, res: Response, next: any) => 
   }
 }
 
-export { createAdminUser, verifySignUpUser, loginUser, verifyLoginUser, getUserDetailsByIdService };
+export { createAdminUser, loginUser, getUserDetailsByIdService };

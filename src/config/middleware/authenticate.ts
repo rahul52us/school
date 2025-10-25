@@ -19,6 +19,8 @@ const authenticate = async (req: any, res: Response, next: NextFunction) => {
     if (!user.isActive) throw generateError("Unauthorized User: Account is inactive", 403);
 
     req.user = user; // attach user info to request
+    req.userId = user._id;
+    
     next();
   } catch (err: any) {
     const error = generateError(`Authentication Error: ${err.message}`, err.status || 401);

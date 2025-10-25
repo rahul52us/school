@@ -4,8 +4,8 @@ export interface UserInterface extends Document {
   name: string;
   code?: string;
   profile_details?: mongoose.Schema.Types.ObjectId;
-  email?: string;
-  phone: string;
+  email: string;
+  phone?: string;
   gender: string;
   pic?: string;
   bio?: string;
@@ -17,7 +17,7 @@ export interface UserInterface extends Document {
   type: "user" | "admin" | "superAdmin";
   userType: string; // student, teacher, staff, principal
   designation?: string;
-  password?: string;
+  password: string; // Changed from optional to required
   deletedAt?: Date;
   createdAt?: Date;
   updatedAt?: Date;
@@ -44,8 +44,19 @@ const UserSchema: Schema<UserInterface> = new Schema<UserInterface>(
   {
     name: { type: String, trim: true, required: true },
     code: { type: String, trim: true, index: true },
-    email: { type: String, lowercase: true, trim: true },
-    phone: { type: String, required: true },
+    email: {
+      type: String,
+      lowercase: true,
+      trim: true,
+      required: true, // Added required
+      unique: true, // Added unique
+      match: [/^\S+@\S+\.\S+$/, "Please provide a valid email address"] // Added validation
+    },
+    phone: {
+      type: String,
+      required: false, // Changed from true to false
+      sparse: true // Added to allow multiple null values
+    },
     pic: { type: String, trim: true },
     gender: { type: String, enum: ["male", "female", "other"], default: "male" },
     bio: { type: String, trim: true },
@@ -75,7 +86,12 @@ const UserSchema: Schema<UserInterface> = new Schema<UserInterface>(
     permissions: { type: Schema.Types.Mixed, default: {} },
     type: { type: String, enum: ["user", "admin", "superAdmin"], default: "user" },
     userType: { type: String },
-    password: { type: String, trim: true },
+    password: {
+      type: String,
+      trim: true,
+      required: true, // Added required
+      minlength: [6, "Password must be at least 6 characters long"] // Added validation
+    },
 
     createdBy: { type: Schema.Types.ObjectId, ref: "User" },
     lastLogin: { type: Date },
@@ -94,23 +110,8 @@ UserSchema.pre("save", function (next) {
   next();
 });
 
-// // Auto-link school based on branch before saving
-// UserSchema.pre("save", async function (next) {
-//   try {
-//     if (this.branch && !this.school) {
-//       const BranchModel = mongoose.model("Branch"); // lazy load to avoid circular dependency
-//       const branchDoc = await BranchModel.findById(this.branch).select("school");
-
-//       if (branchDoc) {
-//         this.school = branchDoc.school;
-//       }
-//     }
-//     next();
-//   } catch (error) {
-//     console.error("Error linking school from branch:", error);
-//     next(error);
-//   }
-// });
+// Index for faster email lookups
+UserSchema.index({ email: 1 });
 
 const UserModel = mongoose.model<UserInterface>("User", UserSchema);
 export default UserModel;

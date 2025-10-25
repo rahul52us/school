@@ -2,21 +2,20 @@ import School from "../schemas/school/school.schema";
 
 export const findSchool = async (data: any) => {
   try {
-
     const schoolName = await School.findOne(data);
     if (schoolName) {
       return {
-        status: "info",
-        statusCode: 300,
+        status: "success", // Changed from "info"
+        statusCode: 200,   // Changed from 300
         message: "School Name is already registered",
         data: schoolName,
       };
     } else {
       return {
-        status: "success",
-        statusCode: 200,
+        status: "error",   // Changed from "success"
+        statusCode: 404,   // Changed from 200
         message: "School Name does not exist",
-        data: "School Name does not exist",
+        data: null,        // Changed from string to null
       };
     }
   } catch (err: any) {
@@ -80,7 +79,7 @@ export const findSchoolById = async (id: string) => {
       };
     } else {
       return {
-        status: "info",
+        status: "error", // Changed from "info"
         statusCode: 404,
         message: "School not found",
         data: null,
@@ -108,7 +107,7 @@ export const updateSchool = async (id: string, data: any) => {
       };
     } else {
       return {
-        status: "info",
+        status: "error", // Changed from "info"
         statusCode: 404,
         message: "School not found",
         data: null,
@@ -136,7 +135,7 @@ export const deleteSchool = async (id: string) => {
       };
     } else {
       return {
-        status: "info",
+        status: "error", // Changed from "info"
         statusCode: 404,
         message: "School not found",
         data: null,
@@ -150,4 +149,4 @@ export const deleteSchool = async (id: string) => {
       data: err?.message,
     };
   }
-};
+}

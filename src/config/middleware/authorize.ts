@@ -8,9 +8,10 @@ const authorize =
         return res.status(401).json({ message: "Not authenticated" });
       }
 
-      if (!allowedRoles.includes(req.user.role)) {
+      // Changed from req.user.role to req.user.type
+      if (!allowedRoles.includes(req.user.type)) {
         return res.status(403).json({
-          message: `Access denied: ${req.user.role} not allowed`,
+          message: `Access denied: ${req.user.type} not allowed`,
           allowedRoles,
         });
       }

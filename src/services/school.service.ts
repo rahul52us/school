@@ -10,7 +10,20 @@ import {
 
 export const createSchoolService = async (req: any, res: Response, next: NextFunction) => {
   try {
-    const user = req.userId;
+    // Debug: Log to see what we have
+    console.log("req.user:", req.user);
+    console.log("req.userId:", req.userId);
+    
+    const user = req.user?._id || req.userId; // Try both
+
+    if (!user) {
+      return res.status(401).send({
+        status: "error",
+        statusCode: 401,
+        message: "User not authenticated",
+        data: null
+      });
+    }
 
     const { status, statusCode, data, message } = await findSchool({ name: req.body.name });
 
@@ -18,8 +31,8 @@ export const createSchoolService = async (req: any, res: Response, next: NextFun
       return res.status(400).send({
         status: "error",
         statusCode: 400,
-        message: "School already exists",
-        data
+        message: "A school with this name already exists",
+        data: null
       });
     }
 
